@@ -7,6 +7,8 @@ import { ParsingResults } from "./parsing-results"
 import { GrammarInput } from "./grammar-input"
 import { StringParser } from "./sections/string-parser"
 
+const BACKEND_URL = "https://backend-lr1-production.up.railway.app"
+
 export function LR1Parser() {
   const [grammar, setGrammar] = useState("")
   const [results, setResults] = useState(null)
@@ -24,7 +26,7 @@ export function LR1Parser() {
     setResults(null)
 
     try {
-      const response = await fetch("http://localhost:8000/parse", {
+      const response = await fetch(`${BACKEND_URL}/parse`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { AlertCircle, CheckCircle, XCircle } from "lucide-react"
 
+const BACKEND_URL = "https://backend-lr1-production.up.railway.app"
+
 interface StringParserProps {
   grammar: string
 }
@@ -53,7 +55,7 @@ export function StringParser({ grammar }: StringParserProps) {
     setResult(null)
 
     try {
-      const response = await fetch("http://localhost:8000/parse/string", {
+      const response = await fetch(`${BACKEND_URL}/parse/string`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

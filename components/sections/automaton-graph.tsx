@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ChevronDown, ChevronUp } from "lucide-react"
+import { ChevronDown, ChevronUp, Download, AlertCircle } from "lucide-react"
 
 interface AutomatonGraphProps {
   automaton: any
@@ -12,19 +12,115 @@ interface AutomatonGraphProps {
 
 export function AutomatonGraph({ automaton, graphs }: AutomatonGraphProps) {
   const [showAllTransitions, setShowAllTransitions] = useState(false)
+  const [activeGraph, setActiveGraph] = useState<"afn" | "afd">("afn")
+  const [hasImages, setHasImages] = useState(false)
+  const [debugInfo, setDebugInfo] = useState("")
+
+  useEffect(() => {
+    const debugMessage = `
+Graphs object: ${graphs ? "exists" : "null"}
+automaton_afn: ${graphs?.automaton_afn ? `exists (${graphs.automaton_afn.substring(0, 50)}...)` : "missing"}
+automaton_afd: ${graphs?.automaton_afd ? `exists (${graphs.automaton_afd.substring(0, 50)}...)` : "missing"}
+    `.trim()
+
+    setDebugInfo(debugMessage)
+    console.log("[v0] Automaton Graph Debug:", debugMessage)
+    console.log("[v0] Full graphs object:", graphs)
+
+    setHasImages(!!(graphs?.automaton_afn || graphs?.automaton_afd))
+  }, [graphs])
 
   const displayedTransitions = showAllTransitions ? automaton?.transitions : automaton?.transitions?.slice(0, 10)
+
+  const downloadImage = (base64: string, filename: string) => {
+    const link = document.createElement("a")
+    link.href = `data:image/png;base64,${base64}`
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
 
   return (
     <Card className="p-6">
       <h2 className="mb-4 text-xl font-bold">Autómata LR(1)</h2>
 
       <div className="space-y-6">
-        {graphs?.automaton_full && (
+        {!hasImages && (
+          <div className="rounded border border-yellow-200 bg-yellow-50 p-4">
+            <div className="mb-2 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-yellow-600" />
+              <span className="font-semibold text-yellow-800">Las imágenes del autómata no están disponibles</span>
+            </div>
+            <p className="mb-3 text-sm text-yellow-700">
+              Verifica que el backend esté retornando los datos correctamente. Abre la consola (F12) para ver los
+              detalles.
+            </p>
+            <div className="rounded bg-yellow-100 p-3 font-mono text-xs text-yellow-900">
+              <pre>{debugInfo}</pre>
+            </div>
+          </div>
+        )}
+
+        {hasImages && (
           <div className="rounded border border-border bg-background/50 p-4">
-            <p className="mb-3 text-sm font-semibold text-muted-foreground">DIAGRAMA DEL AUTÓMATA</p>
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-sm font-semibold text-muted-foreground">DIAGRAMAS DEL AUTÓMATA</p>
+              <div className="flex gap-2">
+                <Button
+                  variant={activeGraph === "afn" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setActiveGraph("afn")}
+                >
+                  AFD
+                </Button>
+                <Button
+                  variant={activeGraph === "afd" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setActiveGraph("afd")}
+                >
+                  AFN
+                </Button>
+              </div>
+            </div>
+
             <div className="flex justify-center overflow-x-auto">
-              <img src={`data:image/png;base64,${graphs.automaton_full}`} alt="Autómata LR(1)" className="max-w-full" />
+              {activeGraph === "afn" && graphs?.automaton_afn && (
+                <div className="flex flex-col items-center gap-3">
+                  <img
+                    src={`data:image/png;base64,${graphs.automaton_afn}`}
+                    alt="Autómata AFD"
+                    className="max-w-full"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 bg-transparent"
+                    onClick={() => downloadImage(graphs.automaton_afn, "automata-afd.png")}
+                  >
+                    <Download className="h-4 w-4" />
+                    Descargar AFD
+                  </Button>
+                </div>
+              )}
+              {activeGraph === "afd" && graphs?.automaton_afd && (
+                <div className="flex flex-col items-center gap-3">
+                  <img
+                    src={`data:image/png;base64,${graphs.automaton_afd}`}
+                    alt="Autómata AFN"
+                    className="max-w-full"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 bg-transparent"
+                    onClick={() => downloadImage(graphs.automaton_afd, "automata-afn.png")}
+                  >
+                    <Download className="h-4 w-4" />
+                    Descargar AFN
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         )}
